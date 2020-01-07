@@ -1,0 +1,31 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<groupId>org.jparsec</groupId>
+	<artifactId>jparsec-parent</artifactId>
+	<version>1.0.0</version>
+	<packaging>pom</packaging>
+	<name>JParsec</name>
+	<description>Java ported version of parsec</description>
+
+	<developers>
+		<developer>
+			<id>yuxuanchiadm</id>
+			<name>Yu Xuanchi</name>
+			<email>yuxuanchiadm@126.com</email>
+			<roles>
+				<role>Author</role>
+				<role>Architect</role>
+				<role>Committer</role>
+			</roles>
+			<timezone>+8</timezone>
+		</developer>
+	</developers>
+
+	<modules>
+		<module>jparsec-utils</module>
+		<module>jparsec-core</module>
+        <module>jparsec-lexer</module>
+    </modules>
+</project>
