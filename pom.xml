@@ -8,6 +8,14 @@
 	<packaging>pom</packaging>
 	<name>JParsec</name>
 	<description>Java ported version of parsec</description>
+ 
+	<distributionManagement>
+		<repository>
+			<id>jparsec-maven</id>
+			<name>jparsec-maven</name>
+			<url>https://api.bintray.com/maven/yuxuanchiadm/jparsec-maven/jparsec/;publish=1</url>
+		</repository>
+	</distributionManagement>
 
 	<developers>
 		<developer>
@@ -26,5 +34,5 @@
 	<modules>
 		<module>jparsec-utils</module>
 		<module>jparsec-core</module>
-    </modules>
+	</modules>
 </project>
