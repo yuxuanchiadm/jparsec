@@ -26,6 +26,5 @@
 	<modules>
 		<module>jparsec-utils</module>
 		<module>jparsec-core</module>
-        <module>jparsec-lexer</module>
     </modules>
 </project>
