@@ -36,6 +36,12 @@ public class ReadTest {
 	@Test public void testReadDouble() {
 		assertEquals(nothing(), evalParser(readDouble(), text("")));
 		assertEquals(nothing(), evalParser(readDouble(), text("bar")));
+		assertEquals(nothing(), evalParser(readDouble(), text("-NaN")));
+		assertEquals(just(Double.NaN), evalParser(readDouble(), text("NaN")));
+		assertEquals(just(Double.POSITIVE_INFINITY), evalParser(readDouble(), text("Infinity")));
+		assertEquals(just(Double.NEGATIVE_INFINITY), evalParser(readDouble(), text("-Infinity")));
+		assertEquals(just(0.0D), evalParser(readDouble(), text("0.0")));
+		assertEquals(just(-0.0D), evalParser(readDouble(), text("-0.0")));
 		assertEquals(just(1024.0D), evalParser(readDouble(), text("1024")));
 		assertEquals(just(-1024.0D), evalParser(readDouble(), text("-1024")));
 		assertEquals(just(-12345.6789D), evalParser(readDouble(), text("-12345.6789")));

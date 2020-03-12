@@ -75,16 +75,28 @@ public final class Read {
 		);
 	}
 	public static <U, E> Parser<Text, U, E, Float> readFloat() {
-		return $do(
-		$(	conclude(fraction(), expected("float"))	, number ->
-		$(	simple((Float) number.floatValue())		))
-		);
+		return conclude(choice(
+			replace(string("NaN"), Float.NaN),
+			replace(string("Infinity"), Float.POSITIVE_INFINITY),
+			replace(string("-Infinity"), Float.NEGATIVE_INFINITY),
+			$do(
+			$(	sign()															, sign ->
+			$(	fraction()														, fraction ->
+			$(	simple(sign ? -fraction.floatValue() : fraction.floatValue())	)))
+			)
+		), expected("float"));
 	}
 	public static <U, E> Parser<Text, U, E, Double> readDouble() {
-		return $do(
-		$(	conclude(fraction(), expected("double"))	, number ->
-		$(	simple((Double) number.doubleValue())		))
-		);
+		return conclude(choice(
+			replace(string("NaN"), Double.NaN),
+			replace(string("Infinity"), Double.POSITIVE_INFINITY),
+			replace(string("-Infinity"), Double.NEGATIVE_INFINITY),
+			$do(
+			$(	sign()															, sign ->
+			$(	fraction()														, fraction ->
+			$(	simple(sign ? -fraction.doubleValue() : fraction.doubleValue())	)))
+			)
+		), expected("double"));
 	}
 	public static <U, E> Parser<Text, U, E, Character> readCharacter() {
 		return conclude(between(character('\''), character('\''),
@@ -126,7 +138,6 @@ public final class Read {
 	}
 	static <U, E> Parser<Text, U, E, BigDecimal> fraction() {
 		return $do(
-			$(	sign()														, sign ->
 			$(	digits(BigInteger.TEN, $do(
 				$(	satisfy(c -> c >= '0' && c <= '9')	, c ->
 				$(	simple(BigInteger.valueOf(c - '0'))	))
@@ -141,8 +152,7 @@ public final class Read {
 			$(	simple(integer.second()
 					.multiply(BigInteger.TEN.pow(fraction.first()))
 					.add(fraction.second()))								, significand ->
-			$(	simple(sign ? significand.negate() : significand)			, unscaled ->
-			$(	simple(new BigDecimal(unscaled, fraction.first())			)))))))
+			$(	simple(new BigDecimal(significand, fraction.first())		)))))
 		);
 	}
 	static <U, E> Parser<Text, U, E, Character> escape() {
