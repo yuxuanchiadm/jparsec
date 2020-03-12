@@ -70,7 +70,7 @@ public final class Char {
 	public static <U, E> Parser<Text, U, E, Character> oneOf(Character... cs) { return satisfy(Arrays.asList(cs)::contains); }
 	public static <U, E> Parser<Text, U, E, Character> noneOf(Character... cs) { return dissatisfy(Arrays.asList(cs)::contains); }
 
-	public static <U, E> Parser<Text, U, E, Character> space() { return conclude(satisfy(Character::isSpaceChar), expected("space")); }
+	public static <U, E> Parser<Text, U, E, Character> space() { return conclude(satisfy(Character::isWhitespace), expected("space")); }
 	public static <U, E> Parser<Text, U, E, Unit> spaces() { return skipSome(space()); }
 	public static <U, E> Parser<Text, U, E, String> newline() { return conclude(choice(string("\r\n"), string("\n")), expected("newline")); }
 	public static <U, E> Parser<Text, U, E, Character> upper() { return conclude(satisfy(Character::isUpperCase), expected("upper")); }
