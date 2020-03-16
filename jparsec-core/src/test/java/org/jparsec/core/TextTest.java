@@ -3,10 +3,10 @@ package org.jparsec.core;
 import org.jparsec.core.Text;
 import static org.jparsec.core.Text.*;
 
-import org.jparsec.utils.data.Maybe;
-import static org.jparsec.utils.data.Maybe.*;
-import org.jparsec.utils.data.Tuple;
-import static org.jparsec.utils.data.Tuple.*;
+import org.monadium.core.data.Maybe;
+import static org.monadium.core.data.Maybe.*;
+import org.monadium.core.data.Tuple;
+import static org.monadium.core.data.Tuple.*;
 
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;

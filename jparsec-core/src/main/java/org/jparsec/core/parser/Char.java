@@ -13,10 +13,10 @@ import static org.jparsec.core.Text.*;
 import org.jparsec.core.parser.Combinator;
 import static org.jparsec.core.parser.Combinator.*;
 
-import org.jparsec.utils.control.Trampoline;
-import static org.jparsec.utils.control.Trampoline.*;
-import org.jparsec.utils.data.Unit;
-import static org.jparsec.utils.data.Unit.*;
+import org.monadium.core.control.Trampoline;
+import static org.monadium.core.control.Trampoline.*;
+import org.monadium.core.data.Unit;
+import static org.monadium.core.data.Unit.*;
 
 import java.util.Arrays;
 import java.util.function.Predicate;

@@ -13,21 +13,21 @@ import static org.jparsec.core.Parser.Result.*;
 
 import static org.jparsec.core.Parser.Notation.*;
 
-import org.jparsec.utils.control.Trampoline;
-import static org.jparsec.utils.control.Trampoline.*;
-import org.jparsec.utils.data.Bottom;
-import static org.jparsec.utils.data.Bottom.*;
-import org.jparsec.utils.data.List;
-import static org.jparsec.utils.data.List.*;
-import org.jparsec.utils.data.Maybe;
-import static org.jparsec.utils.data.Maybe.*;
-import org.jparsec.utils.data.Tuple;
-import static org.jparsec.utils.data.Tuple.*;
-import org.jparsec.utils.data.Unit;
-import static org.jparsec.utils.data.Unit.*;
+import org.monadium.core.control.Trampoline;
+import static org.monadium.core.control.Trampoline.*;
+import org.monadium.core.data.Bottom;
+import static org.monadium.core.data.Bottom.*;
+import org.monadium.core.data.List;
+import static org.monadium.core.data.List.*;
+import org.monadium.core.data.Maybe;
+import static org.monadium.core.data.Maybe.*;
+import org.monadium.core.data.Tuple;
+import static org.monadium.core.data.Tuple.*;
+import org.monadium.core.data.Unit;
+import static org.monadium.core.data.Unit.*;
 
-import static org.jparsec.utils.Notation.*;
-import static org.jparsec.utils.control.Trampoline.Notation.*;
+import static org.monadium.core.Notation.*;
+import static org.monadium.core.control.Trampoline.Notation.*;
 
 import java.util.Arrays;
 import java.util.EnumMap;

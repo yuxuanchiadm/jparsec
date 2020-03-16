@@ -5,14 +5,14 @@ import static org.jparsec.core.Parser.*;
 
 import static org.jparsec.core.Parser.Notation.*;
 
-import org.jparsec.utils.data.Either;
-import static org.jparsec.utils.data.Either.*;
-import org.jparsec.utils.data.List;
-import static org.jparsec.utils.data.List.*;
-import org.jparsec.utils.data.Unit;
-import static org.jparsec.utils.data.Unit.*;
+import org.monadium.core.data.Either;
+import static org.monadium.core.data.Either.*;
+import org.monadium.core.data.List;
+import static org.monadium.core.data.List.*;
+import org.monadium.core.data.Unit;
+import static org.monadium.core.data.Unit.*;
 
-import static org.jparsec.utils.Notation.*;
+import static org.monadium.core.Notation.*;
 
 import java.util.Arrays;
 import java.util.function.BiFunction;

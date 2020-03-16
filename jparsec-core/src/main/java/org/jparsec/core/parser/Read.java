@@ -13,10 +13,10 @@ import static org.jparsec.core.parser.Combinator.*;
 
 import static org.jparsec.core.Parser.Notation.*;
 
-import org.jparsec.utils.data.Tuple;
-import static org.jparsec.utils.data.Tuple.*;
+import org.monadium.core.data.Tuple;
+import static org.monadium.core.data.Tuple.*;
 
-import static org.jparsec.utils.Notation.*;
+import static org.monadium.core.Notation.*;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;

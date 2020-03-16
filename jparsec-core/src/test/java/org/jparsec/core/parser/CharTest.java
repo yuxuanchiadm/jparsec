@@ -9,12 +9,12 @@ import static org.jparsec.core.parser.Char.*;
 
 import static org.jparsec.core.Parser.Notation.*;
 
-import org.jparsec.utils.data.Maybe;
-import static org.jparsec.utils.data.Maybe.*;
-import org.jparsec.utils.data.Unit;
-import static org.jparsec.utils.data.Unit.*;
+import org.monadium.core.data.Maybe;
+import static org.monadium.core.data.Maybe.*;
+import org.monadium.core.data.Unit;
+import static org.monadium.core.data.Unit.*;
 
-import static org.jparsec.utils.Notation.*;
+import static org.monadium.core.Notation.*;
 
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;

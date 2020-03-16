@@ -1,11 +1,11 @@
 package org.jparsec.core;
 
-import org.jparsec.utils.data.Bottom;
-import static org.jparsec.utils.data.Bottom.*;
-import org.jparsec.utils.data.Maybe;
-import static org.jparsec.utils.data.Maybe.*;
-import org.jparsec.utils.data.Tuple;
-import static org.jparsec.utils.data.Tuple.*;
+import org.monadium.core.data.Bottom;
+import static org.monadium.core.data.Bottom.*;
+import org.monadium.core.data.Maybe;
+import static org.monadium.core.data.Maybe.*;
+import org.monadium.core.data.Tuple;
+import static org.monadium.core.data.Tuple.*;
 
 import java.util.function.Predicate;
 

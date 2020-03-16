@@ -19,10 +19,10 @@ import static org.jparsec.core.parser.Term.Operand.*;
 
 import static org.jparsec.core.Parser.Notation.*;
 
-import org.jparsec.utils.data.Maybe;
-import static org.jparsec.utils.data.Maybe.*;
+import org.monadium.core.data.Maybe;
+import static org.monadium.core.data.Maybe.*;
 
-import static org.jparsec.utils.Notation.*;
+import static org.monadium.core.Notation.*;
 
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;

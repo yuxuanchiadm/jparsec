@@ -9,19 +9,19 @@ import static org.jparsec.core.parser.Combinator.*;
 
 import static org.jparsec.core.Parser.Notation.*;
 
-import org.jparsec.utils.data.Either;
-import static org.jparsec.utils.data.Either.*;
-import org.jparsec.utils.data.List;
-import static org.jparsec.utils.data.List.*;
-import org.jparsec.utils.data.Maybe;
-import static org.jparsec.utils.data.Maybe.*;
-import org.jparsec.utils.data.Tuple;
-import static org.jparsec.utils.data.Tuple.*;
-import org.jparsec.utils.data.Unit;
-import static org.jparsec.utils.data.Unit.*;
+import org.monadium.core.data.Either;
+import static org.monadium.core.data.Either.*;
+import org.monadium.core.data.List;
+import static org.monadium.core.data.List.*;
+import org.monadium.core.data.Maybe;
+import static org.monadium.core.data.Maybe.*;
+import org.monadium.core.data.Tuple;
+import static org.monadium.core.data.Tuple.*;
+import org.monadium.core.data.Unit;
+import static org.monadium.core.data.Unit.*;
 
-import static org.jparsec.utils.Notation.*;
-import static org.jparsec.utils.data.List.Notation.*;
+import static org.monadium.core.Notation.*;
+import static org.monadium.core.data.List.Notation.*;
 
 import java.util.Objects;
 import java.util.function.Function;
