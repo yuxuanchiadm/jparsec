@@ -527,19 +527,19 @@ public final class Parser<S, U, E, A> {
 	}
 	public Parser<S, U, E, A> plus(Parser<S, U, E, A> fa) {
 		return parser(e -> $do(
-		$(	parser().apply(e)																					, result1 ->
+		$(	parser().apply(e)																							, result1 ->
 		$(	result1.caseof(
 				(e1, c1, r1) -> done(success(e1, c1, r1)),
 				(e1, c1, h1) -> c1 || h1
 					? done(fail(e1, c1, h1))
 					: more(() -> $do(
-					$(	fa.parser().apply(e)														, result2 ->
+					$(	fa.parser().apply(e)																, result2 ->
 					$(	result2.caseof(
 							(e2, c2, r2) -> done(success(e2, c2, r2)),
-							(e2, c2, h2) -> done(fail(e2.mapLogger(e1.logger()::concat), c2, h2))
-						)																			))
+							(e2, c2, h2) -> done(fail(c2 ? e2 : e2.mapLogger(e1.logger()::concat), c2, h2))
+						)																					))
 					))
-			)																									))
+			)																											))
 		));
 	}
 
