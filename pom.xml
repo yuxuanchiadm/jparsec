@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.jparsec</groupId>
 	<artifactId>jparsec-parent</artifactId>
-	<version>1.1.1</version>
+	<version>1.2.0</version>
 	<packaging>pom</packaging>
 	<name>JParsec</name>
 	<description>Java ported version of parsec</description>
@@ -16,6 +16,14 @@
 			<url>https://api.bintray.com/maven/yuxuanchiadm/jparsec-maven/jparsec/;publish=1</url>
 		</repository>
 	</distributionManagement>
+
+	<repositories>
+		<repository>
+			<id>monadium-maven</id>
+			<name>monadium-maven</name>
+			<url>https://dl.bintray.com/yuxuanchiadm/monadium-maven/</url>
+		</repository>
+	</repositories>
 
 	<developers>
 		<developer>

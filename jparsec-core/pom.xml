@@ -5,28 +5,20 @@
 	<parent>
 		<groupId>org.jparsec</groupId>
 		<artifactId>jparsec-parent</artifactId>
-		<version>1.1.1</version>
+		<version>1.2.0</version>
 	</parent>
 	<artifactId>jparsec-core</artifactId>
 	<name>JParsecCore</name>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
-
-    <repositories>
-        <repository>
-			<id>monadium-maven</id>
-			<name>monadium-maven</name>
-			<url>https://dl.bintray.com/yuxuanchiadm/monadium-maven/</url>
-        </repository>
-    </repositories>
+	</properties>
 
 	<dependencies>
 		<dependency>
 			<groupId>org.monadium</groupId>
 			<artifactId>monadium-core</artifactId>
-			<version>1.0.0</version>
+			<version>1.1.0</version>
 		</dependency>
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
