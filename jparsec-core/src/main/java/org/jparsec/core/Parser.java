@@ -332,10 +332,10 @@ public final class Parser<S, U, E, A> {
 		public Location location() { return location; }
 		public Logger<E> logger() { return logger; }
 
-		public Environment<S, U, E> updateStream(S stream) { return environment(stream, user, location, logger); }
-		public Environment<S, U, E> mapStream(Function<S, S> f) { return environment(f.apply(stream), user, location, logger); }
-		public Environment<S, U, E> updateUser(U user) { return environment(stream, user, location, logger); }
-		public Environment<S, U, E> mapUser(Function<U, U> f) { return environment(stream, f.apply(user), location, logger); }
+		public <A> Environment<A, U, E> updateStream(A stream) { return environment(stream, user, location, logger); }
+		public <A> Environment<A, U, E> mapStream(Function<S, A> f) { return environment(f.apply(stream), user, location, logger); }
+		public <A> Environment<S, A, E> updateUser(A user) { return environment(stream, user, location, logger); }
+		public <A> Environment<S, A, E> mapUser(Function<U, A> f) { return environment(stream, f.apply(user), location, logger); }
 		public Environment<S, U, E> updateLocation(Location location) { return environment(stream, user, location, logger); }
 		public Environment<S, U, E> mapLocation(Function<Location, Location> f) { return environment(stream, user, f.apply(location), logger); }
 		public Environment<S, U, E> updateLogger(Logger<E> logger) { return environment(stream, user, location, logger); }
@@ -430,6 +430,25 @@ public final class Parser<S, U, E, A> {
 	public static <S, U, E> Parser<S, U, E, Logger<E>> getLogger() { return parser(e -> done(success(e, false, e.logger()))); }
 	public static <S, U, E> Parser<S, U, E, Unit> setLogger(Logger<E> logger) { return parser(e -> done(success(environment(e.stream(), e.user(), e.location(), logger), false, unit()))); }
 	public static <S, U, E> Parser<S, U, E, Unit> modifyLogger(Function<Logger<E>, Logger<E>> f) { return parser(e -> done(success(environment(e.stream(), e.user(), e.location(), f.apply(e.logger())), false, unit()))); }
+
+	public static <S, U, E, A, L> Parser<S, U, E, A> localStream(Parser<L, U, E, A> parser, Function<S, L> f) {
+		return parser(e -> $do(
+		$(	parser.parser().apply(e.mapStream(f))									, result1 ->
+		$(	result1.caseof(
+				(e1, c1, r1) -> done(success(e1.updateStream(e.stream()), c1, r1)),
+				(e1, c1, h1) -> done(fail(e1.updateStream(e.stream()), c1, h1))
+			)																		))
+		));
+	}
+	public static <S, U, E, A, L> Parser<S, U, E, A> localUser(Parser<S, L, E, A> parser, Function<U, L> f) {
+		return parser(e -> $do(
+		$(	parser.parser().apply(e.mapUser(f))									, result1 ->
+		$(	result1.caseof(
+				(e1, c1, r1) -> done(success(e1.updateUser(e.user()), c1, r1)),
+				(e1, c1, h1) -> done(fail(e1.updateUser(e.user()), c1, h1))
+			)																	))
+		));
+	}
 
 	@SafeVarargs public static <S, U, E> Parser<S, U, E, Unit> log(Message<E>... messages) { return parser(e -> done(success(e.log(messages), false, unit()))); }
 	@SafeVarargs public static <S, U, E, A> Parser<S, U, E, A> stop(Message<E>... messages) { return parser(e -> done(fail(e.log(messages), false, false))); }
