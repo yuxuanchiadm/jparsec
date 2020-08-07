@@ -58,6 +58,8 @@ public final class Parser<S, U, E, A> {
 		public Location advanceCharacter(char c) { return c == '\n' ? location(tag, offset + 1, line + 1, 1) : location(tag, offset + 1, line, column + 1); }
 		public Location advanceString(String s) { Location result = this; for (int i = 0; i < s.length(); i++) result = result.advanceCharacter(s.charAt(i)); return result; }
 
+		public String compact() { return tag + ":" + offset + ":(" + line + "," + column + ")"; }
+
 		@Override public int compareTo(Location location) {
 			int ord;
 			ord = tag.compareTo(location.tag);
@@ -70,7 +72,7 @@ public final class Parser<S, U, E, A> {
 			if (ord != 0) return ord;
 			return 0;
 		}
-		@Override public String toString() { return "(tag: " + tag + ", line: " + line + ", column: " + column + ")"; }
+		@Override public String toString() { return "(tag: " + tag + ", offset: " + offset + ", line: " + line + ", column: " + column + ")"; }
 	}
 	public static abstract class Message<E> {
 		public enum Type {
@@ -313,12 +315,7 @@ public final class Parser<S, U, E, A> {
 
 		@Override public String toString() {
 			return String.join("\n", logMap.entrySet().stream()
-				.map(entry ->
-					entry.getKey().tag() + ":" +
-					entry.getKey().offset() + ":" +
-					entry.getKey().line() + ":" +
-					entry.getKey().column() + ":\n" +
-					printMessages(entry.getValue(), "    "))
+				.map(entry -> entry.getKey().compact() + ":\n" + printMessages(entry.getValue(), "    "))
 				.toArray(CharSequence[]::new));
 		}
 	}
