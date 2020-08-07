@@ -1,5 +1,7 @@
 package org.jparsec.core;
 
+import java.util.Objects;
+
 import org.jparsec.core.Parser.Location;
 import static org.jparsec.core.Parser.Location.*;
 import org.jparsec.core.Parser.Message;
@@ -73,6 +75,8 @@ public final class Parser<S, U, E, A> {
 			return 0;
 		}
 		@Override public String toString() { return "(tag: " + tag + ", offset: " + offset + ", line: " + line + ", column: " + column + ")"; }
+		@Override public boolean equals(Object x) { return x instanceof Location && Objects.equals(tag, ((Location) x).tag) && Objects.equals(offset, ((Location) x).offset) && Objects.equals(line, ((Location) x).line) && Objects.equals(column, ((Location) x).column); }
+		@Override public int hashCode() { return Objects.hash(tag, offset, line, column); }
 	}
 	public static abstract class Message<E> {
 		public enum Type {
