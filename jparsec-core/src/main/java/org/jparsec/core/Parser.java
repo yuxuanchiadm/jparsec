@@ -41,24 +41,28 @@ import java.util.stream.Stream;
 public final class Parser<S, U, E, A> {
 	public static final class Location implements Comparable<Location> {
 		final String tag;
+		final int offset;
 		final int line;
 		final int column;
 
-		Location(String tag, int line, int column) { this.tag = tag; this.line = line; this.column = column; }
+		Location(String tag, int offset, int line, int column) { this.tag = tag; this.offset = offset; this.line = line; this.column = column; }
 
-		public static Location location(String tag, int line, int column) { return new Location(tag, line, column); }
-		public static Location location() { return location("<unknown>", 1, 1); }
+		public static Location location(String tag, int offset, int line, int column) { return new Location(tag, offset, line, column); }
+		public static Location location() { return location("<unknown>", 0, 1, 1); }
 
 		public String tag() { return tag; }
+		public int offset() { return offset; }
 		public int line() { return line; }
 		public int column() { return column; }
 
-		public Location advanceCharacter(char c) { return c == '\n' ? location(tag, line + 1, 1) : location(tag, line, column + 1); }
+		public Location advanceCharacter(char c) { return c == '\n' ? location(tag, offset + 1, line + 1, 1) : location(tag, offset + 1, line, column + 1); }
 		public Location advanceString(String s) { Location result = this; for (int i = 0; i < s.length(); i++) result = result.advanceCharacter(s.charAt(i)); return result; }
 
 		@Override public int compareTo(Location location) {
 			int ord;
 			ord = tag.compareTo(location.tag);
+			if (ord != 0) return ord;
+			ord = Integer.compare(offset, location.offset);
 			if (ord != 0) return ord;
 			ord = Integer.compare(line, location.line);
 			if (ord != 0) return ord;
@@ -311,6 +315,7 @@ public final class Parser<S, U, E, A> {
 			return String.join("\n", logMap.entrySet().stream()
 				.map(entry ->
 					entry.getKey().tag() + ":" +
+					entry.getKey().offset() + ":" +
 					entry.getKey().line() + ":" +
 					entry.getKey().column() + ":\n" +
 					printMessages(entry.getValue(), "    "))
@@ -419,17 +424,17 @@ public final class Parser<S, U, E, A> {
 	public static <S, U, E> Parser<S, U, E, Unit> setEnvironment(Environment<S, U, E> environment) { return parser(e -> done(success(environment, false, unit()))); }
 	public static <S, U, E> Parser<S, U, E, Unit> modifyEnvironment(Function<Environment<S, U, E>, Environment<S, U, E>> f) { return parser(e -> done(success(f.apply(e), false, unit()))); }
 	public static <S, U, E> Parser<S, U, E, S> getStream() { return parser(e -> done(success(e, false, e.stream()))); }
-	public static <S, U, E> Parser<S, U, E, Unit> setStream(S stream) { return parser(e -> done(success(environment(stream, e.user(), e.location(), e.logger()), false, unit()))); }
-	public static <S, U, E> Parser<S, U, E, Unit> modifyStream(Function<S, S> f) { return parser(e -> done(success(environment(f.apply(e.stream()), e.user(), e.location(), e.logger()), false, unit()))); }
+	public static <S, U, E> Parser<S, U, E, Unit> setStream(S stream) { return parser(e -> done(success(e.updateStream(stream), false, unit()))); }
+	public static <S, U, E> Parser<S, U, E, Unit> modifyStream(Function<S, S> f) { return parser(e -> done(success(e.mapStream(f), false, unit()))); }
 	public static <S, U, E> Parser<S, U, E, U> getUser() { return parser(e -> done(success(e, false, e.user()))); }
-	public static <S, U, E> Parser<S, U, E, Unit> setUser(U user) { return parser(e -> done(success(environment(e.stream(), user, e.location(), e.logger()), false, unit()))); }
-	public static <S, U, E> Parser<S, U, E, Unit> modifyUser(Function<U, U> f) { return parser(e -> done(success(environment(e.stream(), f.apply(e.user()), e.location(), e.logger()), false, unit()))); }
+	public static <S, U, E> Parser<S, U, E, Unit> setUser(U user) { return parser(e -> done(success(e.updateUser(user), false, unit()))); }
+	public static <S, U, E> Parser<S, U, E, Unit> modifyUser(Function<U, U> f) { return parser(e -> done(success(e.mapUser(f), false, unit()))); }
 	public static <S, U, E> Parser<S, U, E, Location> getLocation() { return parser(e -> done(success(e, false, e.location()))); }
-	public static <S, U, E> Parser<S, U, E, Unit> setLocation(Location location) { return parser(e -> done(success(environment(e.stream(), e.user(), location, e.logger()), false, unit()))); }
-	public static <S, U, E> Parser<S, U, E, Unit> modifyLocation(Function<Location, Location> f) { return parser(e -> done(success(environment(e.stream(), e.user(), f.apply(e.location()), e.logger()), false, unit()))); }
+	public static <S, U, E> Parser<S, U, E, Unit> setLocation(Location location) { return parser(e -> done(success(e.updateLocation(location), false, unit()))); }
+	public static <S, U, E> Parser<S, U, E, Unit> modifyLocation(Function<Location, Location> f) { return parser(e -> done(success(e.mapLocation(f), false, unit()))); }
 	public static <S, U, E> Parser<S, U, E, Logger<E>> getLogger() { return parser(e -> done(success(e, false, e.logger()))); }
-	public static <S, U, E> Parser<S, U, E, Unit> setLogger(Logger<E> logger) { return parser(e -> done(success(environment(e.stream(), e.user(), e.location(), logger), false, unit()))); }
-	public static <S, U, E> Parser<S, U, E, Unit> modifyLogger(Function<Logger<E>, Logger<E>> f) { return parser(e -> done(success(environment(e.stream(), e.user(), e.location(), f.apply(e.logger())), false, unit()))); }
+	public static <S, U, E> Parser<S, U, E, Unit> setLogger(Logger<E> logger) { return parser(e -> done(success(e.updateLogger(logger), false, unit()))); }
+	public static <S, U, E> Parser<S, U, E, Unit> modifyLogger(Function<Logger<E>, Logger<E>> f) { return parser(e -> done(success(e.mapLogger(f), false, unit()))); }
 
 	public static <S, U, E, A, L> Parser<S, U, E, A> localStream(Parser<L, U, E, A> parser, Function<S, L> f) {
 		return parser(e -> $do(
