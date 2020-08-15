@@ -508,6 +508,15 @@ public final class Parser<S, U, E, A> {
 			)																				))
 		));
 	}
+	public static <S, U, E, A> Parser<S, U, E, Tuple<Boolean, A>> inspect(Parser<S, U, E, A> parser) {
+		return parser(e -> $do(
+		$(	parser.parser().apply(e)									, result1 ->
+		$(	result1.caseof(
+				(e1, c1, r1) -> done(success(e1, c1, tuple(c1, r1))),
+				(e1, c1, h1) -> done(fail(e1, c1, h1))
+			)															))
+		));
+	}
 
 	public static <S, U, E, A> Result<S, U, E, A> runParser(Parser<S, U, E, A> parser, Environment<S, U, E> environment) { return parser.parser().apply(environment).run(); }
 	public static <S, U, E, A> Result<S, U, E, A> runParser(Parser<S, U, E, A> parser, S stream, U user, Location location, Logger<E> logger) { return runParser(parser, environment(stream, user, location, logger)); }
