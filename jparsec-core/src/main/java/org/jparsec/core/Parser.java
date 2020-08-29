@@ -469,6 +469,15 @@ public final class Parser<S, U, E, A> {
 			)																								))
 		));
 	}
+	@SafeVarargs public static <S, U, E, A> Parser<S, U, E, A> supplement(Parser<S, U, E, A> parser, Message<E>... messages) {
+		return parser(e -> $do(
+		$(	parser.parser().apply(e)																		, result1 ->
+		$(	result1.caseof(
+				(e1, c1, r1) -> done(success(e1, c1, r1)),
+				(e1, c1, h1) -> done(fail(e1.log(e.location(), messages), c1, h1))
+			)																								))
+		));
+	}
 	public static <S, U, E, A> Parser<S, U, E, A> suppress(Parser<S, U, E, A> parser) {
 		return parser(e -> $do(
 		$(	parser.parser().apply(e)											, result1 ->
