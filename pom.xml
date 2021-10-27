@@ -8,22 +8,6 @@
 	<packaging>pom</packaging>
 	<name>JParsec</name>
 	<description>Java ported version of parsec</description>
- 
-	<distributionManagement>
-		<repository>
-			<id>jparsec-maven</id>
-			<name>jparsec-maven</name>
-			<url>https://api.bintray.com/maven/yuxuanchiadm/jparsec-maven/jparsec/;publish=1</url>
-		</repository>
-	</distributionManagement>
-
-	<repositories>
-		<repository>
-			<id>monadium-maven</id>
-			<name>monadium-maven</name>
-			<url>https://dl.bintray.com/yuxuanchiadm/monadium-maven/</url>
-		</repository>
-	</repositories>
 
 	<developers>
 		<developer>
