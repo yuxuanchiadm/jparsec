@@ -13,6 +13,9 @@ jobs:
   build:
 
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: read
 
     steps:
     - uses: actions/checkout@v2
@@ -21,6 +24,10 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
+        server-id: github
+        settings-path: ${{ github.workspace }}
         cache: maven
     - name: Build with Maven
-      run: mvn -B package --file pom.xml
+      run: mvn package --batch-mode --file pom.xml --settings $GITHUB_WORKSPACE/settings.xml
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
