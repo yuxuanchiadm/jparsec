@@ -4,10 +4,26 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>org.jparsec</groupId>
 	<artifactId>jparsec-parent</artifactId>
-	<version>1.9.0</version>
+	<version>2.0.0</version>
 	<packaging>pom</packaging>
 	<name>JParsec</name>
 	<description>Java ported version of parsec</description>
+
+	<distributionManagement>
+		<repository>
+			<id>github</id>
+			<name>Github</name>
+			<url>https://maven.pkg.github.com/yuxuanchiadm/jparsec</url>
+		</repository>
+	</distributionManagement>
+
+	<repositories>
+		<repository>
+			<id>github</id>
+			<name>Github</name>
+			<url>https://maven.pkg.github.com/yuxuanchiadm/monadium</url>
+		</repository>
+	</repositories>
 
 	<developers>
 		<developer>

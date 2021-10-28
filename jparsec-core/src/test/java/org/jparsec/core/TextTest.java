@@ -23,12 +23,12 @@ public class TextTest {
 		assertEquals(text("x"), text("x").concat(text("")));
 		assertEquals(text("y"), text("").concat(text("y")));
 		assertEquals(text("xy"), text("x").concat(text("y")));
-		assertEquals(nothing(), text("").head());
-		assertEquals(just('x'), text("x").head());
-		assertEquals(just('x'), text("xy").head());
-		assertEquals(nothing(), text("").tail());
-		assertEquals(just(text("")), text("x").tail());
-		assertEquals(just(text("y")), text("xy").tail());
+		assertEquals(nothing(), text("").safeHead());
+		assertEquals(just('x'), text("x").safeHead());
+		assertEquals(just('x'), text("xy").safeHead());
+		assertEquals(nothing(), text("").safeTail());
+		assertEquals(just(text("")), text("x").safeTail());
+		assertEquals(just(text("y")), text("xy").safeTail());
 		assertEquals(nothing(), text("").uncons());
 		assertEquals(just(tuple('x', text(""))), text("x").uncons());
 		assertEquals(just(tuple('x', text("y"))), text("xy").uncons());

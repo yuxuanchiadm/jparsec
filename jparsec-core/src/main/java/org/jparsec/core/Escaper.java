@@ -1,9 +1,7 @@
 package org.jparsec.core;
 
-public final class Escaper {
-	Escaper() {}
-
-	public static String escapeCharacter(char c) {
+public interface Escaper {
+	static String escapeCharacter(char c) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("\'");
 		builder.append(
@@ -20,7 +18,7 @@ public final class Escaper {
 		builder.append("\'");
 		return builder.toString();
 	}
-	public static String escapeString(String s) {
+	static String escapeString(String s) {
 		StringBuilder builder = new StringBuilder();
 		builder.append("\"");
 		for (int i = 0; i < s.length(); i++) {

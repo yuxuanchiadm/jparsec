@@ -1,5 +1,8 @@
 package org.jparsec.core.parser;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+
 import org.jparsec.core.Parser;
 import static org.jparsec.core.Parser.*;
 import org.jparsec.core.Parser.Message;
@@ -18,19 +21,14 @@ import static org.monadium.core.data.Tuple.*;
 
 import static org.monadium.core.Notation.*;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
-
-public final class Read {
-	Read() {}
-
-	public static <U, E> Parser<Text, U, E, Boolean> readBoolean() {
+public interface Read {
+	static <U, E> Parser<Text, U, E, Boolean> readBoolean() {
 		return conclude(choice(
 			replace(string("false"), false),
 			replace(string("true"), true)
 		), expected("boolean"));
 	}
-	public static <U, E> Parser<Text, U, E, Byte> readByte() {
+	static <U, E> Parser<Text, U, E, Byte> readByte() {
 		return $do(
 		$(	conclude(integer(), expected("byte"))								, number ->
 		$(	ensure(
@@ -41,7 +39,7 @@ public final class Read {
 		$(	simple(number.byteValueExact())										)))
 		);
 	}
-	public static <U, E> Parser<Text, U, E, Short> readShort() {
+	static <U, E> Parser<Text, U, E, Short> readShort() {
 		return $do(
 		$(	conclude(integer(), expected("short"))								, number ->
 		$(	ensure(
@@ -52,7 +50,7 @@ public final class Read {
 		$(	simple(number.shortValueExact())									)))
 		);
 	}
-	public static <U, E> Parser<Text, U, E, Integer> readInteger() {
+	static <U, E> Parser<Text, U, E, Integer> readInteger() {
 		return $do(
 		$(	conclude(integer(), expected("integer"))							, number ->
 		$(	ensure(
@@ -63,7 +61,7 @@ public final class Read {
 		$(	simple(number.intValueExact())										)))
 		);
 	}
-	public static <U, E> Parser<Text, U, E, Long> readLong() {
+	static <U, E> Parser<Text, U, E, Long> readLong() {
 		return $do(
 		$(	conclude(integer(), expected("long"))								, number ->
 		$(	ensure(
@@ -74,7 +72,7 @@ public final class Read {
 		$(	simple(number.longValueExact())										)))
 		);
 	}
-	public static <U, E> Parser<Text, U, E, Float> readFloat() {
+	static <U, E> Parser<Text, U, E, Float> readFloat() {
 		return conclude(choice(
 			replace(string("NaN"), Float.NaN),
 			replace(string("Infinity"), Float.POSITIVE_INFINITY),
@@ -86,7 +84,7 @@ public final class Read {
 			)
 		), expected("float"));
 	}
-	public static <U, E> Parser<Text, U, E, Double> readDouble() {
+	static <U, E> Parser<Text, U, E, Double> readDouble() {
 		return conclude(choice(
 			replace(string("NaN"), Double.NaN),
 			replace(string("Infinity"), Double.POSITIVE_INFINITY),
@@ -98,12 +96,12 @@ public final class Read {
 			)
 		), expected("double"));
 	}
-	public static <U, E> Parser<Text, U, E, Character> readCharacter() {
+	static <U, E> Parser<Text, U, E, Character> readCharacter() {
 		return conclude(between(character('\''), character('\''),
 			choice(satisfy(c -> c != '\'' && c != '\\'), escape())
 		), expected("character"));
 	}
-	public static <U, E> Parser<Text, U, E, String> readString() {
+	static <U, E> Parser<Text, U, E, String> readString() {
 		return conclude(between(character('\"'), character('\"'), $(
 		$(	some(choice(satisfy(c -> c != '\"' && c != '\\'), escape()))					, characters ->
 		$(	simple(characters.foldl(StringBuilder::append, new StringBuilder()).toString())	))

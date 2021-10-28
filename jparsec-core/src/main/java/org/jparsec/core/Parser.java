@@ -1,6 +1,14 @@
 package org.jparsec.core;
 
+import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.Objects;
+import java.util.SortedMap;
+import java.util.TreeMap;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jparsec.core.Parser.Location;
 import static org.jparsec.core.Parser.Location.*;
@@ -31,55 +39,32 @@ import static org.monadium.core.data.Unit.*;
 import static org.monadium.core.Notation.*;
 import static org.monadium.core.control.Trampoline.Notation.*;
 
-import java.util.Arrays;
-import java.util.EnumMap;
-import java.util.SortedMap;
-import java.util.TreeMap;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-public final class Parser<S, U, E, A> {
-	public static final class Location implements Comparable<Location> {
-		final String tag;
-		final int offset;
-		final int line;
-		final int column;
-
-		Location(String tag, int offset, int line, int column) { this.tag = tag; this.offset = offset; this.line = line; this.column = column; }
-
+public record Parser<S, U, E, A>(Function<Environment<S, U, E>, Trampoline<Result<S, U, E, A>>> parser) {
+	public record Location(String tag, int offset, int line, int column) implements Comparable<Location> {
 		public static Location location(String tag, int offset, int line, int column) { return new Location(tag, offset, line, column); }
 		public static Location location() { return location("<unknown>", 0, 1, 1); }
 
-		public String tag() { return tag; }
-		public int offset() { return offset; }
-		public int line() { return line; }
-		public int column() { return column; }
-
-		public Location advanceCharacter(char c) { return c == '\n' ? location(tag, offset + 1, line + 1, 1) : location(tag, offset + 1, line, column + 1); }
+		public Location advanceCharacter(char c) { return c == '\n' ? location(tag(), offset() + 1, line() + 1, 1) : location(tag(), offset() + 1, line(), column() + 1); }
 		public Location advanceString(String s) { Location result = this; for (int i = 0; i < s.length(); i++) result = result.advanceCharacter(s.charAt(i)); return result; }
 
-		public String compact() { return tag + ":" + offset + ":(" + line + "," + column + ")"; }
+		public String compact() { return tag() + ":" + offset() + ":(" + line() + "," + column() + ")"; }
 
 		@Override public int compareTo(Location location) {
 			int ord;
-			ord = tag.compareTo(location.tag);
+			ord = tag().compareTo(location.tag());
 			if (ord != 0) return ord;
-			ord = Integer.compare(offset, location.offset);
+			ord = Integer.compare(offset(), location.offset());
 			if (ord != 0) return ord;
-			ord = Integer.compare(line, location.line);
+			ord = Integer.compare(line(), location.line());
 			if (ord != 0) return ord;
-			ord = Integer.compare(column, location.column);
+			ord = Integer.compare(column(), location.column());
 			if (ord != 0) return ord;
 			return 0;
 		}
-		@Override public String toString() { return "(tag: " + tag + ", offset: " + offset + ", line: " + line + ", column: " + column + ")"; }
-		@Override public boolean equals(Object x) { return x instanceof Location && Objects.equals(tag, ((Location) x).tag) && Objects.equals(offset, ((Location) x).offset) && Objects.equals(line, ((Location) x).line) && Objects.equals(column, ((Location) x).column); }
-		@Override public int hashCode() { return Objects.hash(tag, offset, line, column); }
+		@Override public String toString() { return "(tag: " + tag() + ", offset: " + offset() + ", line: " + line() + ", column: " + column() + ")"; }
 	}
-	public static abstract class Message<E> {
-		public enum Type {
+	public sealed interface Message<E> {
+		enum Type {
 			INFO("Info", true),
 			WARNING("Warning", true),
 			ERROR("Error", true),
@@ -93,178 +78,55 @@ public final class Parser<S, U, E, A> {
 
 			Type(String key, boolean multiline) { this.key = key; this.multiline = multiline; }
 		}
-		public static final class Info<E> extends Message<E> {
-			final String message;
-
-			Info(String message) { this.message = message; }
-
-			public interface Case<E, R> { R caseInfo(String message); }
-			@Override public <R> R caseof(
-				Info.Case<E, R> caseInfo,
-				Warning.Case<E, R> caseWarning,
-				Error.Case<E, R> caseError,
-				Internal.Case<E, R> caseInternal,
-				External.Case<E, R> caseExternal,
-				Unexpected.Case<E, R> caseUnexpected,
-				Expected.Case<E, R> caseExpected
-			) { return caseInfo.caseInfo(message); }
-
+		record Info<E>(String message) implements Message<E> {
 			@Override public Message.Type type() { return Message.Type.INFO; }
 
-			@Override public String toString() { return message; }
+			@Override public String toString() { return message(); }
 		}
-		public static final class Warning<E> extends Message<E> {
-			final String message;
+		record Warning<E>(String message) implements Message<E> {
+			@Override public Message.Type type() { return Type.WARNING; }
 
-			Warning(String message) { this.message = message; }
-
-			public interface Case<E, R> { R caseWarning(String message); }
-			@Override public <R> R caseof(
-				Info.Case<E, R> caseInfo,
-				Warning.Case<E, R> caseWarning,
-				Error.Case<E, R> caseError,
-				Internal.Case<E, R> caseInternal,
-				External.Case<E, R> caseExternal,
-				Unexpected.Case<E, R> caseUnexpected,
-				Expected.Case<E, R> caseExpected
-			) { return caseWarning.caseWarning(message); }
-
-			@Override public Message.Type type() { return Message.Type.WARNING; }
-
-			@Override public String toString() { return message; }
+			@Override public String toString() { return message(); }
 		}
-		public static final class Error<E> extends Message<E> {
-			final String message;
+		record Error<E>(String message) implements Message<E> {
+			@Override public Message.Type type() { return Type.ERROR; }
 
-			Error(String message) { this.message = message; }
-
-			public interface Case<E, R> { R caseError(String message); }
-			@Override public <R> R caseof(
-				Info.Case<E, R> caseInfo,
-				Warning.Case<E, R> caseWarning,
-				Error.Case<E, R> caseError,
-				Internal.Case<E, R> caseInternal,
-				External.Case<E, R> caseExternal,
-				Unexpected.Case<E, R> caseUnexpected,
-				Expected.Case<E, R> caseExpected
-			) { return caseError.caseError(message); }
-
-			@Override public Message.Type type() { return Message.Type.ERROR; }
-
-			@Override public String toString() { return message; }
+			@Override public String toString() { return message(); }
 		}
-		public static final class Internal<E> extends Message<E> {
-			final String message;
+		record Internal<E>(String message) implements Message<E> {
+			@Override public Message.Type type() { return Type.INTERNAL; }
 
-			Internal(String message) { this.message = message; }
-
-			public interface Case<E, R> { R caseInternal(String message); }
-			@Override public <R> R caseof(
-				Info.Case<E, R> caseInfo,
-				Warning.Case<E, R> caseWarning,
-				Error.Case<E, R> caseError,
-				Internal.Case<E, R> caseInternal,
-				External.Case<E, R> caseExternal,
-				Unexpected.Case<E, R> caseUnexpected,
-				Expected.Case<E, R> caseExpected
-			) { return caseInternal.caseInternal(message); }
-
-			@Override public Message.Type type() { return Message.Type.INTERNAL; }
-
-			@Override public String toString() { return message; }
+			@Override public String toString() { return message(); }
 		}
-		public static final class External<E> extends Message<E> {
-			final E external;
-
-			External(E external) { this.external = external; }
-
-			public interface Case<E, R> { R caseExternal(E external); }
-			@Override public <R> R caseof(
-				Info.Case<E, R> caseInfo,
-				Warning.Case<E, R> caseWarning,
-				Error.Case<E, R> caseError,
-				Internal.Case<E, R> caseInternal,
-				External.Case<E, R> caseExternal,
-				Unexpected.Case<E, R> caseUnexpected,
-				Expected.Case<E, R> caseExpected
-			) { return caseExternal.caseExternal(external); }
-
+		record External<E>(E external) implements Message<E> {
 			@Override public Message.Type type() { return Message.Type.EXTERNAL; }
 
-			@Override public String toString() { return external.toString(); }
+			@Override public String toString() { return external().toString(); }
 		}
-		public static final class Unexpected<E> extends Message<E> {
-			final String syntax;
-
-			Unexpected(String syntax) { this.syntax = syntax; }
-
-			public interface Case<E, R> { R caseUnexpected(String syntax); }
-			@Override public <R> R caseof(
-				Info.Case<E, R> caseInfo,
-				Warning.Case<E, R> caseWarning,
-				Error.Case<E, R> caseError,
-				Internal.Case<E, R> caseInternal,
-				External.Case<E, R> caseExternal,
-				Unexpected.Case<E, R> caseUnexpected,
-				Expected.Case<E, R> caseExpected
-			) { return caseUnexpected.caseUnexpected(syntax); }
-
+		record Unexpected<E>(String syntax) implements Message<E> {
 			@Override public Message.Type type() { return Message.Type.UNEXPECTED; }
 
-			@Override public String toString() { return syntax; }
+			@Override public String toString() { return syntax(); }
 		}
-		public static final class Expected<E> extends Message<E> {
-			final String syntax;
-
-			Expected(String syntax) { this.syntax = syntax; }
-
-			public interface Case<E, R> { R caseExpected(String syntax); }
-			@Override public <R> R caseof(
-				Info.Case<E, R> caseInfo,
-				Warning.Case<E, R> caseWarning,
-				Error.Case<E, R> caseError,
-				Internal.Case<E, R> caseInternal,
-				External.Case<E, R> caseExternal,
-				Unexpected.Case<E, R> caseUnexpected,
-				Expected.Case<E, R> caseExpected
-			) { return caseExpected.caseExpected(syntax); }
-
+		record Expected<E>(String syntax) implements Message<E> {
 			@Override public Message.Type type() { return Message.Type.EXPECTED; }
 
-			@Override public String toString() { return syntax; }
+			@Override public String toString() { return syntax(); }
 		}
 
-		Message() {}
+		static <E> Message<E> info(String message) { return new Info<>(message); }
+		static <E> Message<E> warning(String message) { return new Warning<>(message); }
+		static <E> Message<E> error(String message) { return new Error<>(message); }
+		static <E> Message<E> internal(String message) { return new Internal<>(message); }
+		static <E> Message<E> external(E external) { return new External<>(external); }
+		static <E> Message<E> unexpected(String syntax) { return new Unexpected<>(syntax); }
+		static <E> Message<E> expected(String syntax) { return new Expected<>(syntax); }
 
-		public static <E> Message<E> info(String message) { return new Info<>(message); }
-		public static <E> Message<E> warning(String message) { return new Warning<>(message); }
-		public static <E> Message<E> error(String message) { return new Error<>(message); }
-		public static <E> Message<E> internal(String message) { return new Internal<>(message); }
-		public static <E> Message<E> external(E external) { return new External<>(external); }
-		public static <E> Message<E> unexpected(String syntax) { return new Unexpected<>(syntax); }
-		public static <E> Message<E> expected(String syntax) { return new Expected<>(syntax); }
+		Message.Type type();
 
-		public interface Match<E, R> extends Info.Case<E, R>, Warning.Case<E, R>, Error.Case<E, R>, Internal.Case<E, R>, External.Case<E, R>, Unexpected.Case<E, R>, Expected.Case<E, R> {}
-		public final <R> R match(Match<E, R> match) { return caseof(match, match, match, match, match, match, match); }
-		public abstract <R> R caseof(
-			Info.Case<E, R> caseInfo,
-			Warning.Case<E, R> caseWarning,
-			Error.Case<E, R> caseError,
-			Internal.Case<E, R> caseInternal,
-			External.Case<E, R> caseExternal,
-			Unexpected.Case<E, R> caseUnexpected,
-			Expected.Case<E, R> caseExpected
-		);
-
-		public abstract Message.Type type();
-
-		@Override public abstract String toString();
+		@Override String toString();
 	}
-	public static final class Logger<E> {
-		final SortedMap<Location, EnumMap<Message.Type, List<Message<E>>>> logMap;
-
-		Logger(SortedMap<Location, EnumMap<Message.Type, List<Message<E>>>> logMap) { this.logMap = logMap; }
-
+	public record Logger<E>(SortedMap<Location, EnumMap<Message.Type, List<Message<E>>>> logMap) {
 		@SafeVarargs public static <E> Logger<E> logger(Location location, Message<E>... messages) {
 			SortedMap<Location, EnumMap<Message.Type, List<Message<E>>>> logMap = new TreeMap<>();
 			logMap.put(location, Arrays.stream(messages).collect(Collectors.toMap(
@@ -278,14 +140,14 @@ public final class Parser<S, U, E, A> {
 		public static <E> Logger<E> logger() { return new Logger<>(new TreeMap<>()); }
 
 		public Stream<Tuple<Location, Message<E>>> messages() {
-			return logMap.entrySet().stream()
+			return logMap().entrySet().stream()
 				.flatMap(entry -> entry.getValue().values().stream()
 				.flatMap(messages -> messages.stream()
 				.map(message -> tuple(entry.getKey(), message))));
 		}
 		public Logger<E> concat(Logger<E> logger) {
-			SortedMap<Location, EnumMap<Message.Type, List<Message<E>>>> logMap1 = this.logMap;
-			SortedMap<Location, EnumMap<Message.Type, List<Message<E>>>> logMap2 = logger.logMap;
+			SortedMap<Location, EnumMap<Message.Type, List<Message<E>>>> logMap1 = this.logMap();
+			SortedMap<Location, EnumMap<Message.Type, List<Message<E>>>> logMap2 = logger.logMap();
 			SortedMap<Location, EnumMap<Message.Type, List<Message<E>>>> logMap3 = new TreeMap<>(logMap1);
 			logMap2.forEach((location, messageMap) -> logMap3.merge(location, messageMap, (messageMap1, messageMap2) -> {
 				EnumMap<Message.Type, List<Message<E>>> messageMap3 = new EnumMap<>(messageMap1);
@@ -318,99 +180,59 @@ public final class Parser<S, U, E, A> {
 		}
 
 		@Override public String toString() {
-			return String.join("\n", logMap.entrySet().stream()
+			return String.join("\n", logMap().entrySet().stream()
 				.map(entry -> entry.getKey().compact() + ":\n" + printMessages(entry.getValue(), "    "))
 				.toArray(CharSequence[]::new));
 		}
 	}
-	public static final class Environment<S, U, E> {
-		final S stream;
-		final U user;
-		final Location location;
-		final Logger<E> logger;
-
-		Environment(S stream, U user, Location location, Logger<E> logger) { this.stream = stream; this.user = user; this.location = location; this.logger = logger; }
-
+	public record Environment<S, U, E>(S stream, U user, Location location, Logger<E> logger) {
 		public static <S, U, E> Environment<S, U, E> environment(S stream, U user, Location location, Logger<E> logger) { return new Environment<>(stream, user, location, logger); }
 
-		public S stream() { return stream; }
-		public U user() { return user; }
-		public Location location() { return location; }
-		public Logger<E> logger() { return logger; }
-
-		public <A> Environment<A, U, E> updateStream(A stream) { return environment(stream, user, location, logger); }
-		public <A> Environment<A, U, E> mapStream(Function<S, A> f) { return environment(f.apply(stream), user, location, logger); }
-		public <A> Environment<S, A, E> updateUser(A user) { return environment(stream, user, location, logger); }
-		public <A> Environment<S, A, E> mapUser(Function<U, A> f) { return environment(stream, f.apply(user), location, logger); }
-		public Environment<S, U, E> updateLocation(Location location) { return environment(stream, user, location, logger); }
-		public Environment<S, U, E> mapLocation(Function<Location, Location> f) { return environment(stream, user, f.apply(location), logger); }
-		public Environment<S, U, E> updateLogger(Logger<E> logger) { return environment(stream, user, location, logger); }
-		public Environment<S, U, E> mapLogger(Function<Logger<E>, Logger<E>> f) { return environment(stream, user, location, f.apply(logger)); }
+		public <A> Environment<A, U, E> updateStream(A stream) { return environment(stream, user(), location(), logger()); }
+		public <A> Environment<A, U, E> mapStream(Function<S, A> f) { return environment(f.apply(stream()), user(), location(), logger()); }
+		public <A> Environment<S, A, E> updateUser(A user) { return environment(stream(), user, location(), logger()); }
+		public <A> Environment<S, A, E> mapUser(Function<U, A> f) { return environment(stream(), f.apply(user()), location(), logger()); }
+		public Environment<S, U, E> updateLocation(Location location) { return environment(stream(), user(), location, logger()); }
+		public Environment<S, U, E> mapLocation(Function<Location, Location> f) { return environment(stream(), user(), f.apply(location()), logger()); }
+		public Environment<S, U, E> updateLogger(Logger<E> logger) { return environment(stream(), user(), location(), logger); }
+		public Environment<S, U, E> mapLogger(Function<Logger<E>, Logger<E>> f) { return environment(stream(), user(), location(), f.apply(logger())); }
 
 		@SafeVarargs public final Environment<S, U, E> log(Location location, Message<E>... messages) {
-			return new Environment<>(this.stream, this.user, this.location, this.logger.log(location, messages));
+			return new Environment<>(stream(), user(), location(), logger().log(location, messages));
 		}
-		@SafeVarargs public final Environment<S, U, E> log(Message<E>... messages) { return log(location, messages); }
+		@SafeVarargs public final Environment<S, U, E> log(Message<E>... messages) { return log(location(), messages); }
 	}
-	public static abstract class Result<S, U, E, A> {
-		public static final class Success<S, U, E, A> extends Result<S, U, E, A> {
-			final Environment<S, U, E> environment;
-			final boolean consumed;
-			final A result;
-
-			Success(Environment<S, U, E> environment, boolean consumed, A result) { this.environment = environment; this.consumed = consumed; this.result = result; }
-
-			public interface Case<S, U, E, A, R> { R caseSuccess(Environment<S, U, E> environment, boolean consumed, A result); }
-			@Override public <R> R caseof(Success.Case<S, U, E, A, R> caseSuccess, Fail.Case<S, U, E, A, R> caseFail) { return caseSuccess.caseSuccess(environment, consumed, result); }
-
+	public sealed interface Result<S, U, E, A> {
+		record Success<S, U, E, A>(Environment<S, U, E> environment, boolean consumed, A result) implements Result<S, U, E, A> {
 			@Override public boolean isSuccess() { return true; }
 			@Override public boolean isFail() { return false; }
-			@Override public Environment<S, U, E> getEnvironment() { return environment; }
-			@Override public boolean getConsumed() { return consumed; }
-			@Override public Maybe<A> getResult() { return just(result); }
-			@Override public A coerceResult() throws Undefined { return result; }
+			@Override public Environment<S, U, E> getEnvironment() { return environment(); }
+			@Override public boolean getConsumed() { return consumed(); }
+			@Override public Maybe<A> getResult() { return just(result()); }
+			@Override public A coerceResult() throws Undefined { return result(); }
 			@Override public boolean coerceAbort() throws Undefined { return undefined(); }
 		}
-		public static final class Fail<S, U, E, A> extends Result<S, U, E, A> {
-			final Environment<S, U, E> environment;
-			final boolean consumed;
-			final boolean halt;
-
-			Fail(Environment<S, U, E> environment, boolean consumed, boolean halt) { this.environment = environment; this.consumed = consumed; this.halt = halt; }
-
-			public interface Case<S, U, E, A, R> { R caseFail(Environment<S, U, E> environment, boolean consumed, boolean halt); }
-			@Override public <R> R caseof(Success.Case<S, U, E, A, R> caseSuccess, Fail.Case<S, U, E, A, R> caseFail) { return caseFail.caseFail(environment, consumed, halt); }
-
+		record Fail<S, U, E, A>(Environment<S, U, E> environment, boolean consumed, boolean halt) implements Result<S, U, E, A> {
 			@Override public boolean isSuccess() { return false; }
 			@Override public boolean isFail() { return true; }
-			@Override public Environment<S, U, E> getEnvironment() { return environment; }
-			@Override public boolean getConsumed() { return consumed; }
+			@Override public Environment<S, U, E> getEnvironment() { return environment(); }
+			@Override public boolean getConsumed() { return consumed(); }
 			@Override public Maybe<A> getResult() { return nothing(); }
 			@Override public A coerceResult() throws Undefined { return undefined(); }
-			@Override public boolean coerceAbort() throws Undefined { return halt; }
+			@Override public boolean coerceAbort() throws Undefined { return halt(); }
 		}
 
-		Result() {}
+		static <S, U, E, A> Result<S, U, E, A> success(Environment<S, U, E> environment, boolean consumed, A result) { return new Success<>(environment, consumed, result); }
+		static <S, U, E, A> Result<S, U, E, A> fail(Environment<S, U, E> environment, boolean consumed, boolean halt) { return new Fail<>(environment, consumed, halt); }
 
-		public interface Match<S, U, E, A, R> extends Success.Case<S, U, E, A, R>, Fail.Case<S, U, E, A, R> {}
-		public final <R> R match(Match<S, U, E, A, R> match) { return caseof(match, match); }
-		public abstract <R> R caseof(Success.Case<S, U, E, A, R> caseSuccess, Fail.Case<S, U, E, A, R> caseFail);
-
-		public static <S, U, E, A> Result<S, U, E, A> success(Environment<S, U, E> environment, boolean consumed, A result) { return new Success<>(environment, consumed, result); }
-		public static <S, U, E, A> Result<S, U, E, A> fail(Environment<S, U, E> environment, boolean consumed, boolean halt) { return new Fail<>(environment, consumed, halt); }
-
-		public abstract boolean isSuccess();
-		public abstract boolean isFail();
-		public abstract Environment<S, U, E> getEnvironment();
-		public abstract boolean getConsumed();
-		public abstract Maybe<A> getResult();
-		public abstract A coerceResult() throws Undefined;
-		public abstract boolean coerceAbort() throws Undefined;
+		boolean isSuccess();
+		boolean isFail();
+		Environment<S, U, E> getEnvironment();
+		boolean getConsumed();
+		Maybe<A> getResult();
+		A coerceResult() throws Undefined;
+		boolean coerceAbort() throws Undefined;
 	}
-
-	Parser(Function<Environment<S, U, E>, Trampoline<Result<S, U, E, A>>> parser) { this.parser = parser; }
-
-	final Function<Environment<S, U, E>, Trampoline<Result<S, U, E, A>>> parser;
 
 	public static <S, U, E, A> Parser<S, U, E, A> parser(Function<Environment<S, U, E>, Trampoline<Result<S, U, E, A>>> parser) { return new Parser<>(parser); }
 	public static <S, U, E, A> Parser<S, U, E, A> simple(A a) { return parser(e -> done(success(e, false, a))); }
@@ -418,8 +240,6 @@ public final class Parser<S, U, E, A> {
 	public static <S, U, E, A> Parser<S, U, E, A> panic() { return halt(internal("Parser panicked")); }
 	public static <S, U, E, A> Parser<S, U, E, A> recur(Function<Unit, Parser<S, U, E, A>> f) { return parser(e -> more(() -> f.apply(unit()).parser().apply(e))); }
 	public static <S, U, E, A> Parser<S, U, E, A> recur(Supplier<Parser<S, U, E, A>> f) { return recur(u -> f.get()); }
-
-	public Function<Environment<S, U, E>, Trampoline<Result<S, U, E, A>>> parser() { return parser; }
 
 	public static <S, U, E> Parser<S, U, E, Environment<S, U, E>> getEnvironment() { return parser(e -> done(success(e, false, e))); }
 	public static <S, U, E> Parser<S, U, E, Unit> setEnvironment(Environment<S, U, E> environment) { return parser(e -> done(success(environment, false, unit()))); }
@@ -439,20 +259,20 @@ public final class Parser<S, U, E, A> {
 
 	public static <S, U, E, A, L> Parser<S, U, E, A> localStream(Parser<L, U, E, A> parser, Function<S, L> f) {
 		return parser(e -> $do(
-		$(	parser.parser().apply(e.mapStream(f))									, result1 ->
-		$(	result1.caseof(
-				(e1, c1, r1) -> done(success(e1.updateStream(e.stream()), c1, r1)),
-				(e1, c1, h1) -> done(fail(e1.updateStream(e.stream()), c1, h1))
-			)																		))
+		$(	parser.parser().apply(e.mapStream(f))																					, result1 ->
+		$(	switch (result1) {
+				case Success<L, U, E, A> p1 -> done(success(p1.environment().updateStream(e.stream()), p1.consumed(), p1.result()));
+				case Fail<L, U, E, A> p1 -> done(fail(p1.environment().updateStream(e.stream()), p1.consumed(), p1.halt()));
+			}																														))
 		));
 	}
 	public static <S, U, E, A, L> Parser<S, U, E, A> localUser(Parser<S, L, E, A> parser, Function<U, L> f) {
 		return parser(e -> $do(
-		$(	parser.parser().apply(e.mapUser(f))									, result1 ->
-		$(	result1.caseof(
-				(e1, c1, r1) -> done(success(e1.updateUser(e.user()), c1, r1)),
-				(e1, c1, h1) -> done(fail(e1.updateUser(e.user()), c1, h1))
-			)																	))
+		$(	parser.parser().apply(e.mapUser(f))																					, result1 ->
+		$(	switch (result1) {
+				case Success<S, L, E, A> p1 -> done(success(p1.environment().updateUser(e.user()), p1.consumed(), p1.result()));
+				case Fail<S, L, E, A> p1  -> done(fail(p1.environment().updateUser(e.user()), p1.consumed(), p1.halt()));
+			}																													))
 		));
 	}
 
@@ -462,68 +282,68 @@ public final class Parser<S, U, E, A> {
 	@SafeVarargs public static <S, U, E> Parser<S, U, E, Unit> ensure(boolean condition, Message<E>... messages) { return condition ? simple(unit()) : stop(messages); }
 	@SafeVarargs public static <S, U, E, A> Parser<S, U, E, A> conclude(Parser<S, U, E, A> parser, Message<E>... messages) {
 		return parser(e -> $do(
-		$(	parser.parser().apply(e)																		, result1 ->
-		$(	result1.caseof(
-				(e1, c1, r1) -> done(success(e1, c1, r1)),
-				(e1, c1, h1) -> done(fail(e1.updateLogger(e.logger().log(e.location(), messages)), c1, h1))
-			)																								))
+		$(	parser.parser().apply(e)																													, result1 ->
+		$(	switch (result1) {
+				case Success<S, U, E, A> p1 -> done(success(p1.environment(), p1.consumed(), p1.result()));
+				case Fail<S, U, E, A> p1 -> done(fail(p1.environment().updateLogger(e.logger().log(e.location(), messages)), p1.consumed(), p1.halt()));
+			}																																			))
 		));
 	}
 	@SafeVarargs public static <S, U, E, A> Parser<S, U, E, A> supplement(Parser<S, U, E, A> parser, Message<E>... messages) {
 		return parser(e -> $do(
-		$(	parser.parser().apply(e)																		, result1 ->
-		$(	result1.caseof(
-				(e1, c1, r1) -> done(success(e1, c1, r1)),
-				(e1, c1, h1) -> done(fail(e1.log(e.location(), messages), c1, h1))
-			)																								))
+		$(	parser.parser().apply(e)																							, result1 ->
+		$(	switch (result1) {
+				case Success<S, U, E, A> p1 -> done(success(p1.environment(), p1.consumed(), p1.result()));
+				case Fail<S, U, E, A> p1 -> done(fail(p1.environment().log(e.location(), messages), p1.consumed(), p1.halt()));
+			}																													))
 		));
 	}
 	public static <S, U, E, A> Parser<S, U, E, A> suppress(Parser<S, U, E, A> parser) {
 		return parser(e -> $do(
-		$(	parser.parser().apply(e)											, result1 ->
-		$(	result1.caseof(
-				(e1, c1, r1) -> done(success(e1, c1, r1)),
-				(e1, c1, h1) -> done(fail(e1.updateLogger(e.logger()), c1, h1))
-			)																	))
+		$(	parser.parser().apply(e)																						, result1 ->
+		$(	switch (result1) {
+				case Success<S, U, E, A> p1 -> done(success(p1.environment(), p1.consumed(), p1.result()));
+				case Fail<S, U, E, A> p1 -> done(fail(p1.environment().updateLogger(e.logger()), p1.consumed(), p1.halt()));
+			}																												))
 		));
 	}
 
 	public static <S, U, E, A> Parser<S, U, E, A> lookahead(Parser<S, U, E, A> parser) {
 		return parser(e -> $do(
-		$(	parser.parser().apply(e)													, result1 ->
-		$(	result1.caseof(
-				(e1, c1, r1) -> done(success(e.updateLogger(e1.logger()), false, r1)),
-				(e1, c1, h1) -> done(fail(e1, c1, h1))
-			)																			))
+		$(	parser.parser().apply(e)																						, result1 ->
+		$(	switch (result1) {
+				case Success<S, U, E, A> p1 -> done(success(e.updateLogger(p1.environment().logger()), false, p1.result()));
+				case Fail<S, U, E, A> p1 -> done(fail(p1.environment(), p1.consumed(), p1.halt()));
+			}																												))
 		));
 	}
 	public static <S, U, E, A> Parser<S, U, E, A> attempt(Parser<S, U, E, A> parser) {
 		return parser(e -> $do(
-		$(	parser.parser().apply(e)												, result1 ->
-		$(	result1.caseof(
-				(e1, c1, r1) -> done(success(e1, c1, r1)),
-				(e1, c1, h1) -> done(fail(e.updateLogger(e1.logger()), false, h1))
-			)																		))
+		$(	parser.parser().apply(e)																				, result1 ->
+		$(	switch (result1) {
+				case Success<S, U, E, A> p1 -> done(success(p1.environment(), p1.consumed(), p1.result()));
+				case Fail<S, U, E, A> p1 -> done(fail(e.updateLogger(p1.environment().logger()), false, p1.halt()));
+			}																										))
 		));
 	}
 	public static <S, U, E, A> Parser<S, U, E, A> advancing(Parser<S, U, E, A> parser) {
 		return parser(e -> $do(
-		$(	parser.parser().apply(e)														, result1 ->
-		$(	result1.caseof(
-				(e1, c1, r1) -> c1
-					? done(success(e1, true, r1))
-					: done(fail(e1.log(internal("Parser not advancing")), false, false)),
-				(e1, c1, h1) -> done(fail(e1, c1, h1))
-			)																				))
+		$(	parser.parser().apply(e)																	, result1 ->
+		$(	switch (result1) {
+				case Success<S, U, E, A> p1 -> p1.consumed()
+					? done(success(p1.environment(), true, p1.result()))
+					: done(fail(p1.environment().log(internal("Parser not advancing")), false, false));
+				case Fail<S, U, E, A> p1 -> done(fail(p1.environment(), p1.consumed(), p1.halt()));
+			}																							))
 		));
 	}
 	public static <S, U, E, A> Parser<S, U, E, Tuple<Boolean, A>> inspect(Parser<S, U, E, A> parser) {
 		return parser(e -> $do(
-		$(	parser.parser().apply(e)									, result1 ->
-		$(	result1.caseof(
-				(e1, c1, r1) -> done(success(e1, c1, tuple(c1, r1))),
-				(e1, c1, h1) -> done(fail(e1, c1, h1))
-			)															))
+		$(	parser.parser().apply(e)																								, result1 ->
+		$(	switch (result1) {
+				case Success<S, U, E, A> p1 -> done(success(p1.environment(), p1.consumed(), tuple(p1.consumed(), p1.result())));
+				case Fail<S, U, E, A> p1 -> done(fail(p1.environment(), p1.consumed(), p1.halt()));
+			}																														))
 		));
 	}
 
@@ -545,44 +365,44 @@ public final class Parser<S, U, E, A> {
 
 	public <B> Parser<S, U, E, B> map(Function<A, B> f) {
 		return parser(e -> $do(
-		$(	parser().apply(e)										, result1 ->
-		$(	result1.caseof(
-				(e1, c1, r1) -> done(success(e1, c1, f.apply(r1))),
-				(e1, c1, h1) -> done(fail(e1, c1, h1))
-			)														))
+		$(	parser().apply(e)																						, result1 ->
+		$(	switch (result1) {
+				case Success<S, U, E, A> p1 -> done(success(p1.environment(), p1.consumed(), f.apply(p1.result())));
+				case Fail<S, U, E, A> p1 -> done(fail(p1.environment(), p1.consumed(), p1.halt()));
+			}																										))
 		));
 	}
 	public <B> Parser<S, U, E, B> applyMap(Parser<S, U, E, Function<A, B>> fab) { return fab.flatMap(f -> map(f)); }
 	public <B> Parser<S, U, E, B> flatMap(Function<A, Parser<S, U, E, B>> f) {
 		return parser(e -> $do(
-		$(	parser().apply(e)														, result1 ->
-		$(	result1.caseof(
-				(e1, c1, r1) -> more(() -> $do(
-				$(	f.apply(r1).parser().apply(e1)						, result2 ->
-				$(	result2.caseof(
-						(e2, c2, r2) -> done(success(e2, c1 || c2, r2)),
-						(e2, c2, h2) -> done(fail(e2, c1 || c2, h2))
-					)													))
-				)),
-				(e1, c1, h1) -> done(fail(e1, c1, h1))
-			)																		))
+		$(	parser().apply(e)																													, result1 ->
+		$(	switch (result1) {
+				case Success<S, U, E, A> p1 -> more(() -> $do(
+				$(	f.apply(p1.result()).parser().apply(p1.environment())															, result2 ->
+				$(	switch (result2) {
+						case Success<S, U, E, B> p2 -> done(success(p2.environment(), p1.consumed() || p2.consumed(), p2.result()));
+						case Fail<S, U, E, B> p2 -> done(fail(p2.environment(), p1.consumed() || p2.consumed(), p2.halt()));
+					}																												))
+				));
+				case Fail<S, U, E, A> p1 -> done(fail(p1.environment(), p1.consumed(), p1.halt()));
+			}																																	))
 		));
 	}
 	public Parser<S, U, E, A> plus(Parser<S, U, E, A> fa) {
 		return parser(e -> $do(
-		$(	parser().apply(e)																							, result1 ->
-		$(	result1.caseof(
-				(e1, c1, r1) -> done(success(e1, c1, r1)),
-				(e1, c1, h1) -> c1 || h1
-					? done(fail(e1, c1, h1))
+		$(	parser().apply(e)																																												, result1 ->
+		$(	switch (result1) {
+				case Success<S, U, E, A> p1 -> done(success(p1.environment(), p1.consumed(), p1.result()));
+				case Fail<S, U, E, A> p1 -> p1.consumed() || p1.halt()
+					? done(fail(p1.environment(), p1.consumed(), p1.halt()))
 					: more(() -> $do(
-					$(	fa.parser().apply(e)																, result2 ->
-					$(	result2.caseof(
-							(e2, c2, r2) -> done(success(e2, c2, r2)),
-							(e2, c2, h2) -> done(fail(c2 ? e2 : e2.mapLogger(e1.logger()::concat), c2, h2))
-						)																					))
-					))
-			)																											))
+					$(	fa.parser().apply(e)																																					, result2 ->
+					$(	switch (result2) {
+							case Success<S, U, E, A> p2 -> done(success(p2.environment(), p2.consumed(), p2.result()));
+							case Fail<S, U, E, A> p2 -> done(fail(p2.consumed() ? p2.environment() : p2.environment().mapLogger(p1.environment().logger()::concat), p2.consumed(), p2.halt()));
+						}																																										))
+					));
+			}																																																))
 		));
 	}
 
@@ -592,11 +412,9 @@ public final class Parser<S, U, E, A> {
 	public static <S, U, E, A, B> Parser<S, U, E, B> replace(Parser<S, U, E, A> fa, B b) { return fa.map(a -> b); }
 	public static <S, U, E, A> Parser<S, U, E, Unit> discard(Parser<S, U, E, A> fa) { return fa.map(a -> unit()); }
 
-	public static final class Notation {
-		Notation() {}
-
-		public static <S, U, E, A, B> Parser<S, U, E, B> $(Parser<S, U, E, A> fa, Function<A, Parser<S, U, E, B>> f) { return fa.flatMap(f); }
-		public static <S, U, E, A, B> Parser<S, U, E, B> $(Parser<S, U, E, A> fa, Supplier<Parser<S, U, E, B>> fb) { return fa.flatMap(a -> fb.get()); }
-		@SafeVarargs public static <S, U, E, A> Parser<S, U, E, A> $sum(Parser<S, U, E, A>... fs) { return Arrays.stream(fs).reduce(empty(), Parser::plus); }
+	public interface Notation {
+		static <S, U, E, A, B> Parser<S, U, E, B> $(Parser<S, U, E, A> fa, Function<A, Parser<S, U, E, B>> f) { return fa.flatMap(f); }
+		static <S, U, E, A, B> Parser<S, U, E, B> $(Parser<S, U, E, A> fa, Supplier<Parser<S, U, E, B>> fb) { return fa.flatMap(a -> fb.get()); }
+		@SafeVarargs static <S, U, E, A> Parser<S, U, E, A> $sum(Parser<S, U, E, A>... fs) { return Arrays.stream(fs).reduce(empty(), Parser::plus); }
 	}
 }
