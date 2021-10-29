@@ -43,12 +43,7 @@ public sealed interface Text {
 		@Override public boolean equals(Object x) { return x instanceof Empty; }
 		@Override public int hashCode() { return "".hashCode(); }
 	}
-	final class Nonempty implements Text {
-		final String s;
-		final int offset;
-
-		Nonempty(String s, int offset) { this.s = s; this.offset = offset; }
-
+	record Nonempty(String s, int offset) implements Text {
 		public char head() { return s.charAt(offset); }
 		public Text tail() { return text(s, offset + 1); }
 
